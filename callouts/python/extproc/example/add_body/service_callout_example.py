@@ -26,20 +26,25 @@ class CalloutServerExample(callout_server.CalloutServer):
   with 'new-body'.
   """
 
-  def on_request_body(self, body: service_pb2.HttpBody,
-                      context: ServicerContext) -> service_pb2.BodyResponse:
+  def on_request_body(
+    self, body: service_pb2.HttpBody, context: ServicerContext
+  ) -> service_pb2.BodyResponse:
     """Custom processor on the request body."""
     return callout_tools.add_body_mutation(
-        body.body.decode('utf-8') + '-added-request-body')
+      body.body.decode('utf-8') + '-added-request-body'
+    )
 
-  def on_response_body(self, body: service_pb2.HttpBody,
-                       context: ServicerContext) -> service_pb2.BodyResponse:
+  def on_response_body(
+    self, body: service_pb2.HttpBody, context: ServicerContext
+  ) -> service_pb2.BodyResponse:
     """Custom processor on the response body."""
     return callout_tools.add_body_mutation('new-body')
 
 
 if __name__ == '__main__':
   # Run the gRPC service
-  CalloutServerExample(address=('0.0.0.0', 443),
-                       insecure_address=('0.0.0.0', 8080),
-                       health_check_address=('0.0.0.0', 80)).run()
+  CalloutServerExample(
+    address=('0.0.0.0', 443),
+    insecure_address=('0.0.0.0', 8080),
+    health_check_address=('0.0.0.0', 80),
+  ).run()

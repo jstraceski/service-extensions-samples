@@ -15,7 +15,10 @@
 import logging
 from grpc import ServicerContext
 from envoy.service.ext_proc.v3 import external_processor_pb2 as service_pb2
-from envoy.service.ext_proc.v3.external_processor_pb2 import ProcessingRequest, ProcessingResponse
+from envoy.service.ext_proc.v3.external_processor_pb2 import (
+  ProcessingRequest,
+  ProcessingResponse,
+)
 from extproc.service import callout_server
 from extproc.service import callout_tools
 from google.protobuf.wrappers_pb2 import StringValue
@@ -47,27 +50,34 @@ def check_metadata(request: service_pb2.ProcessingRequest):
   return fr_data.HasField('string_value') and fr_data.string_value != ''
 
 
-default_headers = [('service-callout-response-intercept', 'intercepted'),
-                   ('x-used-deltas-gfe3', ''), ('x-used-staging-gfe3', ''),
-                   ('x-ext-proc', '')]
+default_headers = [
+  ('service-callout-response-intercept', 'intercepted'),
+  ('x-used-deltas-gfe3', ''),
+  ('x-used-staging-gfe3', ''),
+  ('x-ext-proc', ''),
+]
 
 
 class CalloutServerExample(callout_server.CalloutServer):
   """Example callout server for use in e2e metadata testing."""
 
-  def process(self, request: ProcessingRequest,
-              context: ServicerContext) -> ProcessingResponse:
+  def process(
+    self, request: ProcessingRequest, context: ServicerContext
+  ) -> ProcessingResponse:
     logging.info('Received request %s.', request)
     if request.HasField('response_body'):
       return ProcessingResponse(
-          response_body=callout_tools.add_body_mutation('e2e-test'))
+        response_body=callout_tools.add_body_mutation('e2e-test')
+      )
     if not check_metadata(request):
       return ProcessingResponse(
-          response_headers=callout_tools.add_header_mutation(
-              default_headers),)
+        response_headers=callout_tools.add_header_mutation(default_headers),
+      )
     return ProcessingResponse(
-        response_headers=callout_tools.add_header_mutation(
-            add=[('metadata', 'found')] + default_headers),)
+      response_headers=callout_tools.add_header_mutation(
+        add=[('metadata', 'found')] + default_headers
+      ),
+    )
 
 
 if __name__ == '__main__':

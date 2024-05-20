@@ -18,17 +18,21 @@ from typing import Any
 from grpc import ServicerContext
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from envoy.service.ext_proc.v3 import external_processor_pb2 as service_pb2
-from envoy.service.ext_proc.v3.external_processor_pb2 import HeadersResponse, HttpHeaders, BodyResponse
+from envoy.service.ext_proc.v3.external_processor_pb2 import (
+  HeadersResponse,
+  HttpHeaders,
+  BodyResponse,
+)
 from extproc.service import callout_server
 from extproc.service import callout_tools
 import threading
 import json
 
 counters = {
-    'request_header_count': 0,
-    'request_body_count': 0,
-    'response_header_count': 0,
-    'response_body_count': 0
+  'request_header_count': 0,
+  'request_body_count': 0,
+  'response_header_count': 0,
+  'response_body_count': 0,
 }
 
 lock = threading.Lock()
@@ -37,16 +41,17 @@ lock = threading.Lock()
 class ObservabilityServerExample(callout_server.CalloutServer):
   """Example observability callout server for use in e2e testing.
 
-    Doesn't perform any mutations to the request or the response.
-    Logs callouts to a pollable server interface.
-    """
+  Doesn't perform any mutations to the request or the response.
+  Logs callouts to a pollable server interface.
+  """
 
   def __init__(self, **kwargs):
     super().__init__(**kwargs)
     # Use the insecure port for debugging info.
     self.counter_http_server = HTTPServer(('0.0.0.0', 8080), RequestHandler)
     counter_http_server_thread = threading.Thread(
-        target=self.counter_http_server.serve_forever)
+      target=self.counter_http_server.serve_forever
+    )
     counter_http_server_thread.daemon = True
     counter_http_server_thread.start()
 
@@ -55,31 +60,35 @@ class ObservabilityServerExample(callout_server.CalloutServer):
     self.counter_http_server.shutdown()
     return super().shutdown()
 
-  def on_request_headers(self, headers: service_pb2.HttpHeaders,
-                         context: ServicerContext) -> HeadersResponse:
+  def on_request_headers(
+    self, headers: service_pb2.HttpHeaders, context: ServicerContext
+  ) -> HeadersResponse:
     """Custom processor on request headers."""
     logging.info('on_request_headers %s', headers)
     with lock:
       counters['request_header_count'] += 1
     return HeadersResponse()
 
-  def on_request_body(self, body: service_pb2.HttpBody,
-                      context: ServicerContext) -> BodyResponse:
+  def on_request_body(
+    self, body: service_pb2.HttpBody, context: ServicerContext
+  ) -> BodyResponse:
     """Custom processor on the request body."""
     logging.info('on_request_body %s', body)
     with lock:
       counters['request_body_count'] += 1
     return BodyResponse()
 
-  def on_response_headers(self, headers: HttpHeaders,
-                          context: ServicerContext) -> None | Any:
+  def on_response_headers(
+    self, headers: HttpHeaders, context: ServicerContext
+  ) -> None | Any:
     logging.info('on_response_headers %s', headers)
     with lock:
       counters['response_header_count'] += 1
     return HeadersResponse()
 
-  def on_response_body(self, body: service_pb2.HttpBody,
-                       context: ServicerContext) -> BodyResponse:
+  def on_response_body(
+    self, body: service_pb2.HttpBody, context: ServicerContext
+  ) -> BodyResponse:
     """Custom processor on the response body."""
     logging.info('on_response_body %s', body)
     with lock:
@@ -88,7 +97,6 @@ class ObservabilityServerExample(callout_server.CalloutServer):
 
 
 class RequestHandler(BaseHTTPRequestHandler):
-
   def do_GET(self):
     if self.path == '/counters':
       self.send_response(200)
@@ -97,7 +105,7 @@ class RequestHandler(BaseHTTPRequestHandler):
       with lock:
         self.wfile.write(json.dumps(counters).encode())
     else:
-      self.send_error(404, "Not Found")
+      self.send_error(404, 'Not Found')
 
 
 if __name__ == '__main__':

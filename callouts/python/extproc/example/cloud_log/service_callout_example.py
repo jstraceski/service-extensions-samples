@@ -35,19 +35,19 @@ class CalloutServerExample(callout_server.CalloutServer):
   """
 
   def on_request_headers(
-      self, headers: service_pb2.HttpHeaders, context: ServicerContext
+    self, headers: service_pb2.HttpHeaders, context: ServicerContext
   ) -> service_pb2.HeadersResponse:
     """Custom processor on request headers."""
     return callout_tools.add_header_mutation(
-      add=[('header-request', 'request')],
-      clear_route_cache=True
+      add=[('header-request', 'request')], clear_route_cache=True
     )
 
   def on_request_body(
-      self, body: service_pb2.HttpBody, context: ServicerContext
+    self, body: service_pb2.HttpBody, context: ServicerContext
   ) -> service_pb2.BodyResponse:
     """Custom processor on the request body."""
     return callout_tools.add_body_mutation(body='-added-body')
+
 
 if __name__ == '__main__':
   """Sets up Google Cloud Logging for the cloud_log example"""

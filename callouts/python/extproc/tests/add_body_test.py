@@ -15,17 +15,20 @@ from __future__ import print_function
 
 from envoy.service.ext_proc.v3.external_processor_pb2 import BodyResponse
 from envoy.service.ext_proc.v3 import external_processor_pb2 as service_pb2
-from envoy.service.ext_proc.v3 import external_processor_pb2_grpc as service_pb2_grpc
+from envoy.service.ext_proc.v3 import (
+  external_processor_pb2_grpc as service_pb2_grpc,
+)
 import pytest
 from extproc.service import callout_server, callout_tools
 
 from extproc.example.add_body.service_callout_example import (
-    CalloutServerExample as CalloutServerTest)
+  CalloutServerExample as CalloutServerTest,
+)
 from extproc.tests.basic_grpc_test import (
-    make_request,
-    setup_server,
-    get_insecure_channel,
-    insecure_kwargs,
+  make_request,
+  setup_server,
+  get_insecure_channel,
+  insecure_kwargs,
 )
 
 # Import the setup server test fixture.
@@ -41,7 +44,10 @@ def test_mock_request_body_handling(server: CalloutServerTest) -> None:
     mock_body = service_pb2.HttpBody(body=b'mock-body')
     response = make_request(stub, request_body=mock_body)
 
-    assert response.request_body.response.body_mutation.body == b'mock-body-added-request-body'
+    assert (
+      response.request_body.response.body_mutation.body
+      == b'mock-body-added-request-body'
+    )
 
 
 @pytest.mark.parametrize('server', [_local_test_args], indirect=True)

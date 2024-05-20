@@ -27,14 +27,20 @@ from envoy.service.ext_proc.v3.external_processor_pb2 import ProcessingResponse
 from envoy.service.ext_proc.v3.external_processor_pb2 import ProcessingRequest
 from envoy.service.ext_proc.v3.external_processor_pb2 import HttpHeaders
 from envoy.service.ext_proc.v3.external_processor_pb2 import HttpBody
-from envoy.service.ext_proc.v3.external_processor_pb2_grpc import ExternalProcessorStub
+from envoy.service.ext_proc.v3.external_processor_pb2_grpc import (
+  ExternalProcessorStub,
+)
 import grpc
 import pytest
 
-from extproc.example.basic_callout_server import (BasicCalloutServer as
-                                                  CalloutServerTest)
+from extproc.example.basic_callout_server import (
+  BasicCalloutServer as CalloutServerTest,
+)
 from extproc.service.callout_server import CalloutServer, addr_to_str
-from extproc.service.callout_tools import add_body_mutation, add_header_mutation
+from extproc.service.callout_tools import (
+  add_body_mutation,
+  add_header_mutation,
+)
 
 
 class ServerSetupException(Exception):
@@ -45,21 +51,24 @@ class NoResponseError(Exception):
   pass
 
 
-# Replace the default ports of the server so that they do not clash with running programs.
+# Replace the default ports of the server so that they do not clash with
+# running programs.
 default_kwargs: dict = {
-    'address': ('0.0.0.0', 8443),
-    'health_check_address': ('0.0.0.0', 8080)
+  'address': ('0.0.0.0', 8443),
+  'health_check_address': ('0.0.0.0', 8080),
 }
 # Arguments for running an insecure server alongside the secure grpc.
-insecure_kwargs: dict = default_kwargs | {'insecure_address': ('0.0.0.0', 8000)}
+insecure_kwargs: dict = default_kwargs | {
+  'insecure_address': ('0.0.0.0', 8000)
+}
 _local_test_args: dict = {
-    "kwargs": insecure_kwargs,
-    "test_class": CalloutServerTest
+  'kwargs': insecure_kwargs,
+  'test_class': CalloutServerTest,
 }
 
 
 def get_insecure_channel(server: CalloutServer) -> grpc.Channel:
-  """From a CalloutServer get the insecure address and create a grpc channel to it.
+  """Create a grpc channel for the CalloutServer's insecure address.
 
   Args:
       server: Server to connect to.
@@ -106,7 +115,7 @@ def setup_server(request) -> Iterator[CalloutServer]:
   """Set up basic CalloutServer.
 
   Takes in two optional pytest parameters.
-  'kwargs': Arguments passed into the server constructor. 
+  'kwargs': Arguments passed into the server constructor.
     Default is the value of default_kwargs.
   'test_class': Class to use when constructing the server.
     Default is the base CalloutServer.
@@ -116,7 +125,8 @@ def setup_server(request) -> Iterator[CalloutServer]:
   """
   params: dict = request.param or {'kwargs': {}, 'test_class': None}
   kwargs: Mapping[str, Any] = default_kwargs | params['kwargs']
-  # Either use the provided class or create a server using the default CalloutServer class.
+  # Either use the provided class or create a server using the default
+  # CalloutServer class.
   server = (params['test_class'] or CalloutServer)(**kwargs)
   try:
     thread = _start_server(server)
@@ -140,7 +150,7 @@ def make_request(stub: ExternalProcessorStub, **kwargs) -> ProcessingResponse:
   # Get the first response
   for response in responses:
     return response
-  raise NoResponseError("Response not found.")
+  raise NoResponseError('Response not found.')
 
 
 class TestBasicServer(object):
@@ -154,13 +164,15 @@ class TestBasicServer(object):
       root_cert = file.read()
       file.close()
     creds = grpc.ssl_channel_credentials(root_cert)
-    options = ((
+    options = (
+      (
         'grpc.ssl_target_name_override',
         'localhost',
-    ),)
-    with grpc.secure_channel(f'{addr_to_str(server.address)}',
-                             creds,
-                             options=options) as channel:
+      ),
+    )
+    with grpc.secure_channel(
+      f'{addr_to_str(server.address)}', creds, options=options
+    ) as channel:
       stub = ExternalProcessorStub(channel)
 
       body = HttpBody(end_of_stream=False)
@@ -178,15 +190,20 @@ class TestBasicServer(object):
       value = make_request(stub, response_headers=headers)
       assert value.HasField('response_headers')
       assert value.response_headers == add_header_mutation(
-          add=[('hello', 'service-extensions')])
+        add=[('hello', 'service-extensions')]
+      )
 
       value = make_request(stub, request_headers=headers)
       assert value.HasField('request_headers')
       assert value.request_headers == add_header_mutation(
-          add=[(':host', 'service-extensions.com'), (':path', '/'),
-               ('header-request', 'request')],
-          clear_route_cache=True,
-          remove=['foo'])
+        add=[
+          (':host', 'service-extensions.com'),
+          (':path', '/'),
+          ('header-request', 'request'),
+        ],
+        clear_route_cache=True,
+        remove=['foo'],
+      )
 
       make_request(stub, request_headers=end_headers)
       channel.close()
@@ -196,16 +213,15 @@ class TestBasicServer(object):
     """Test that the health check sub server returns the expected 200 code."""
     assert server.health_check_address is not None
     response = urllib.request.urlopen(
-        f'http://{addr_to_str(server.health_check_address)}')
+      f'http://{addr_to_str(server.health_check_address)}'
+    )
     assert not response.read()
     assert response.getcode() == 200
 
 
 _secure_test_args: dict = {
-    "kwargs": insecure_kwargs | {
-        'secure_health_check': True
-    },
-    "test_class": CalloutServerTest
+  'kwargs': insecure_kwargs | {'secure_health_check': True},
+  'test_class': CalloutServerTest,
 }
 
 
@@ -217,8 +233,8 @@ def test_https_health_check(server: CalloutServerTest) -> None:
   ssl_context.check_hostname = False
   ssl_context.verify_mode = ssl.CERT_NONE
   response = urllib.request.urlopen(
-      f'https://{addr_to_str(server.health_check_address)}',
-      context=ssl_context)
+    f'https://{addr_to_str(server.health_check_address)}', context=ssl_context
+  )
   assert not response.read()
   assert response.getcode() == 200
 
@@ -233,9 +249,10 @@ def test_custom_server_config() -> None:
     health_check_port = 8001
 
     server = test_server = CalloutServerTest(
-        address=(ip, port),
-        insecure_address=(ip, insecure_port),
-        health_check_address=(ip, health_check_port))
+      address=(ip, port),
+      insecure_address=(ip, insecure_port),
+      health_check_address=(ip, health_check_port),
+    )
     # Start the server in a background thread
     thread = threading.Thread(target=test_server.run)
     thread.daemon = True
@@ -248,27 +265,28 @@ def test_custom_server_config() -> None:
 
     with grpc.insecure_channel(f'{ip}:{insecure_port}') as channel:
       stub = ExternalProcessorStub(channel)
-      value = make_request(stub,
-                           response_headers=HttpHeaders(end_of_stream=True))
+      value = make_request(
+        stub, response_headers=HttpHeaders(end_of_stream=True)
+      )
       assert value.HasField('response_headers')
       assert value.response_headers == add_header_mutation(
-          add=[('hello', 'service-extensions')])
+        add=[('hello', 'service-extensions')]
+      )
 
     # Stop the server
     test_server.shutdown()
     thread.join(timeout=5)
   except urllib.error.URLError as ex:
     raise ServerSetupException(
-        'Failed to connect to the callout server.') from ex
+      'Failed to connect to the callout server.'
+    ) from ex
   finally:
     del server
 
 
 _no_health_args: dict = {
-    "kwargs": insecure_kwargs | {
-        'combined_health_check': True
-    },
-    "test_class": CalloutServerTest
+  'kwargs': insecure_kwargs | {'combined_health_check': True},
+  'test_class': CalloutServerTest,
 }
 
 
@@ -276,7 +294,7 @@ _no_health_args: dict = {
 def test_custom_server_no_health_check(server: CalloutServerTest) -> None:
   """Test that the server only conects to the specified addresses.
 
-  The server should not connect to the health check port if its disabled 
+  The server should not connect to the health check port if its disabled
   in the setup config.
   """
   address = _local_test_args['kwargs']['health_check_address']

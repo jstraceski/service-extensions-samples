@@ -16,7 +16,9 @@ from envoy.config.core.v3.base_pb2 import HeaderValueOption
 from grpc import ServicerContext
 from envoy.service.ext_proc.v3 import external_processor_pb2 as service_pb2
 from extproc.service import callout_server, callout_tools
+
 actions = HeaderValueOption.HeaderAppendAction
+
 
 class CalloutServerExample(callout_server.CalloutServer):
   """Example callout server.
@@ -29,21 +31,23 @@ class CalloutServerExample(callout_server.CalloutServer):
   """
 
   def on_request_headers(
-      self, headers: service_pb2.HttpHeaders,
-      context: ServicerContext) -> service_pb2.HeadersResponse:
+    self, headers: service_pb2.HttpHeaders, context: ServicerContext
+  ) -> service_pb2.HeadersResponse:
     """Custom processor on request headers."""
     return callout_tools.add_header_mutation(
-        add=[('header-request', 'request-new-value')],
-        append_action=actions.OVERWRITE_IF_EXISTS_OR_ADD,
-        clear_route_cache=True)
+      add=[('header-request', 'request-new-value')],
+      append_action=actions.OVERWRITE_IF_EXISTS_OR_ADD,
+      clear_route_cache=True,
+    )
 
   def on_response_headers(
-      self, headers: service_pb2.HttpHeaders,
-      context: ServicerContext) -> service_pb2.HeadersResponse:
+    self, headers: service_pb2.HttpHeaders, context: ServicerContext
+  ) -> service_pb2.HeadersResponse:
     """Custom processor on response headers."""
     return callout_tools.add_header_mutation(
-        add=[('header-response', 'response-new-value')],
-        append_action=actions.OVERWRITE_IF_EXISTS_OR_ADD)
+      add=[('header-response', 'response-new-value')],
+      append_action=actions.OVERWRITE_IF_EXISTS_OR_ADD,
+    )
 
 
 if __name__ == '__main__':

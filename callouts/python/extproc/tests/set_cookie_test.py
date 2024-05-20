@@ -16,32 +16,37 @@ from __future__ import annotations
 from envoy.config.core.v3.base_pb2 import HeaderMap
 from envoy.config.core.v3.base_pb2 import HeaderValue
 from envoy.service.ext_proc.v3 import external_processor_pb2 as service_pb2
-from envoy.service.ext_proc.v3 import external_processor_pb2_grpc as service_pb2_grpc
+from envoy.service.ext_proc.v3 import (
+  external_processor_pb2_grpc as service_pb2_grpc,
+)
 import pytest
 
 from extproc.service import callout_tools
 from extproc.example.set_cookie.service_callout_example import (
-    CalloutServerExample as CalloutServerTest,)
+  CalloutServerExample as CalloutServerTest,
+)
 from extproc.tests.basic_grpc_test import (
-    setup_server,
-    get_insecure_channel,
-    insecure_kwargs,
-    make_request,
+  setup_server,
+  get_insecure_channel,
+  insecure_kwargs,
+  make_request,
 )
 
 # Import the setup server test fixture.
 _ = setup_server
-_local_test_args = {"kwargs": insecure_kwargs, "test_class": CalloutServerTest}
+_local_test_args = {'kwargs': insecure_kwargs, 'test_class': CalloutServerTest}
 
 
 @pytest.mark.parametrize('server', [_local_test_args], indirect=True)
-def test_header_set_cookie_for_particular_request(server: CalloutServerTest) -> None:
+def test_header_set_cookie_for_particular_request(
+  server: CalloutServerTest,
+) -> None:
   with get_insecure_channel(server) as channel:
     stub = service_pb2_grpc.ExternalProcessorStub(channel)
 
     # Construct the HeaderMap
     header_map = HeaderMap()
-    header_value = HeaderValue(key="cookie-check", raw_value=b"value")
+    header_value = HeaderValue(key='cookie-check', raw_value=b'value')
     header_map.headers.extend([header_value])
 
     # Construct HttpHeaders with the HeaderMap
@@ -51,10 +56,16 @@ def test_header_set_cookie_for_particular_request(server: CalloutServerTest) -> 
 
     assert response.HasField('response_headers')
     assert response.response_headers == callout_tools.add_header_mutation(
-        add=[('Set-Cookie', 'your_cookie_name=cookie_value; Max-Age=3600; Path=/')])
-    
+      add=[
+        ('Set-Cookie', 'your_cookie_name=cookie_value; Max-Age=3600; Path=/')
+      ]
+    )
+
+
 @pytest.mark.parametrize('server', [_local_test_args], indirect=True)
-def test_header_not_set_cookie_without_header(server: CalloutServerTest) -> None:
+def test_header_not_set_cookie_without_header(
+  server: CalloutServerTest,
+) -> None:
   with get_insecure_channel(server) as channel:
     stub = service_pb2_grpc.ExternalProcessorStub(channel)
 

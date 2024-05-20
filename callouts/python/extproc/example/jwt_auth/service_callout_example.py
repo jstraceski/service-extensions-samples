@@ -25,11 +25,17 @@ from extproc.service import callout_tools
 
 
 def extract_jwt_token(request_headers) -> Union[str, None]:
-  jwt_token = next((header.raw_value.decode('utf-8')
-                    for header in request_headers.headers.headers
-                    if header.key == 'Authorization'), None)
-  extracted_jwt = jwt_token.split(
-      ' ')[1] if jwt_token and ' ' in jwt_token else jwt_token
+  jwt_token = next(
+    (
+      header.raw_value.decode('utf-8')
+      for header in request_headers.headers.headers
+      if header.key == 'Authorization'
+    ),
+    None,
+  )
+  extracted_jwt = (
+    jwt_token.split(' ')[1] if jwt_token and ' ' in jwt_token else jwt_token
+  )
   return extracted_jwt
 
 
@@ -60,20 +66,22 @@ class CalloutServerExample(callout_server.CalloutServer):
   """
 
   def on_request_headers(
-      self, headers: service_pb2.HttpHeaders,
-      context: ServicerContext) -> Union[service_pb2.HeadersResponse, None]:
+    self, headers: service_pb2.HttpHeaders, context: ServicerContext
+  ) -> Union[service_pb2.HeadersResponse, None]:
     """Custom processor on request headers."""
 
-    decoded = validate_jwt_token(self.public_key, headers, "RS256")
+    decoded = validate_jwt_token(self.public_key, headers, 'RS256')
 
     if decoded:
       decoded_items = [
-          ('decoded-' + key, str(value)) for key, value in decoded.items()
+        ('decoded-' + key, str(value)) for key, value in decoded.items()
       ]
-      return callout_tools.add_header_mutation(add=decoded_items,
-                                               clear_route_cache=True)
+      return callout_tools.add_header_mutation(
+        add=decoded_items, clear_route_cache=True
+      )
     else:
       callout_tools.deny_callout(context, 'Authorization token is invalid')
+    return None
 
 
 if __name__ == '__main__':

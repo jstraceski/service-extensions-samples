@@ -35,9 +35,11 @@ from envoy.service.ext_proc.v3.external_processor_pb2 import ImmediateResponse
 from envoy.service.ext_proc.v3.external_processor_pb2 import ProcessingRequest
 from envoy.service.ext_proc.v3.external_processor_pb2 import ProcessingResponse
 from envoy.service.ext_proc.v3.external_processor_pb2_grpc import (
-    add_ExternalProcessorServicer_to_server,)
+  add_ExternalProcessorServicer_to_server,
+)
 from envoy.service.ext_proc.v3.external_processor_pb2_grpc import (
-    ExternalProcessorServicer,)
+  ExternalProcessorServicer,
+)
 import grpc
 from grpc import ServicerContext
 
@@ -73,37 +75,38 @@ class CalloutServer:
     health_check_address: The health check serving address.
     health_check_port: If set, overides the port of the health_check_address.
       If no address is set, defaults to default_ip.
-    combined_health_check: If True, does not create seperate health check server. 
-    insecure_address: If specified, the server will also listen on this, 
+    combined_health_check: If True, does not create seperate health check
+      server.
+    insecure_address: If specified, the server will also listen on this,
       non-authenticated, address.
     insecure_port: If set, overides the port of the insecure_address.
       If no address is set, defaults to default_ip.
-    default_ip: If left None, defaults to '0.0.0.0'. 
+    default_ip: If left None, defaults to '0.0.0.0'.
     cert: If speficied, certificate used to authenticate the main grpc service
       for secure htps and http connections. If unspecified will attempt to
       load data from a file pointed to by the cert_path.
     cert_path: Relative file path pointing to the main services certificate,
       also used for the health check, if specified.
-    cert_key_path: Relative file path pointing to the public key of the 
+    cert_key_path: Relative file path pointing to the public key of the
       grpc certificate.
     server_thread_count: Threads allocated to the main grpc service.
   """
 
   def __init__(
-      self,
-      address: tuple[str, int] | None = None,
-      port: int | None = None,
-      health_check_address: tuple[str, int] | None = None,
-      health_check_port: int | None = None,
-      combined_health_check: bool = False,
-      secure_health_check: bool = False,
-      insecure_address: tuple[str, int] | None = None,
-      insecure_port: int | None = None,
-      default_ip: str | None = None,
-      cert_path: str = './extproc/ssl_creds/localhost.crt',
-      cert_key_path: str = './extproc/ssl_creds/localhost.key',
-      public_key_path: str = './extproc/ssl_creds/publickey.pem',
-      server_thread_count: int = 2,
+    self,
+    address: tuple[str, int] | None = None,
+    port: int | None = None,
+    health_check_address: tuple[str, int] | None = None,
+    health_check_port: int | None = None,
+    combined_health_check: bool = False,
+    secure_health_check: bool = False,
+    insecure_address: tuple[str, int] | None = None,
+    insecure_port: int | None = None,
+    default_ip: str | None = None,
+    cert_path: str = './extproc/ssl_creds/localhost.crt',
+    cert_key_path: str = './extproc/ssl_creds/localhost.key',
+    public_key_path: str = './extproc/ssl_creds/publickey.pem',
+    server_thread_count: int = 2,
   ):
     self._setup = False
     self._shutdown = False
@@ -124,8 +127,10 @@ class CalloutServer:
     if not combined_health_check:
       self.health_check_address = health_check_address or (default_ip, 80)
       if health_check_port:
-        self.health_check_address = (self.health_check_address[0],
-                                     health_check_port)
+        self.health_check_address = (
+          self.health_check_address[0],
+          health_check_port,
+        )
 
     self.server_thread_count = server_thread_count
     self.secure_health_check = secure_health_check
@@ -160,19 +165,25 @@ class CalloutServer:
   def _start_servers(self) -> None:
     """Start the requested servers."""
     if self.health_check_address:
-      self._health_check_server = HTTPServer(self.health_check_address,
-                                             HealthCheckService)
+      self._health_check_server = HTTPServer(
+        self.health_check_address, HealthCheckService
+      )
       protocol = 'HTTP'
       if self.secure_health_check:
         protocol = 'HTTPS'
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        ssl_context.load_cert_chain(certfile=self.cert_path,
-                                    keyfile=self.cert_key_path)
+        ssl_context.load_cert_chain(
+          certfile=self.cert_path, keyfile=self.cert_key_path
+        )
         self._health_check_server.socket = ssl_context.wrap_socket(
-            sock=self._health_check_server.socket,)
+          sock=self._health_check_server.socket,
+        )
 
-      logging.info('%s health check server bound to %s.', protocol,
-                   addr_to_str(self.health_check_address))
+      logging.info(
+        '%s health check server bound to %s.',
+        protocol,
+        addr_to_str(self.health_check_address),
+      )
     self._callout_server.start()
 
   def _stop_servers(self) -> None:
@@ -191,10 +202,11 @@ class CalloutServer:
     # We chose the main serving thread based on what server configuration
     # was requested. Defaults to the health check thread.
     if self._health_check_server:
-      logging.info("Health check server started.")
+      logging.info('Health check server started.')
       self._health_check_server.serve_forever()
     else:
-      # If the only server requested is a grpc callout server, we wait on the grpc server.
+      # If the only server requested is a grpc callout server, we wait on the
+      # grpc server.
       self._callout_server.loop()
 
   def shutdown(self) -> None:
@@ -205,9 +217,9 @@ class CalloutServer:
       self._callout_server.stop()
 
   def process(
-      self,
-      callout: ProcessingRequest,
-      context: ServicerContext,
+    self,
+    callout: ProcessingRequest,
+    context: ServicerContext,
   ) -> ProcessingResponse:
     """Process incomming callouts.
 
@@ -225,10 +237,13 @@ class CalloutServer:
         case HeadersResponse() | None as header_response:
           return ProcessingResponse(request_headers=header_response)
         case _:
-          logging.warn("MALFORMED CALLOUT %s", callout)
+          logging.warn('MALFORMED CALLOUT %s', callout)
     elif callout.HasField('response_headers'):
-      return ProcessingResponse(response_headers=self.on_response_headers(
-          callout.response_headers, context))
+      return ProcessingResponse(
+        response_headers=self.on_response_headers(
+          callout.response_headers, context
+        )
+      )
     elif callout.HasField('request_body'):
       match self.on_request_body(callout.request_body, context):
         case ImmediateResponse() as immediate_body:
@@ -236,16 +251,17 @@ class CalloutServer:
         case BodyResponse() | None as body_response:
           return ProcessingResponse(request_body=body_response)
         case _:
-          logging.warn("MALFORMED CALLOUT %s", callout)
+          logging.warn('MALFORMED CALLOUT %s', callout)
     elif callout.HasField('response_body'):
       return ProcessingResponse(
-          response_body=self.on_response_body(callout.response_body, context))
+        response_body=self.on_response_body(callout.response_body, context)
+      )
     return ProcessingResponse()
 
   def on_request_headers(
-      self,
-      headers: HttpHeaders,  # pylint: disable=unused-argument
-      context: ServicerContext  # pylint: disable=unused-argument
+    self,
+    headers: HttpHeaders,  # pylint: disable=unused-argument
+    context: ServicerContext,  # pylint: disable=unused-argument
   ) -> None | HeadersResponse | ImmediateResponse:
     """Process incoming request headers.
 
@@ -259,9 +275,9 @@ class CalloutServer:
     return None
 
   def on_response_headers(
-      self,
-      headers: HttpHeaders,  # pylint: disable=unused-argument
-      context: ServicerContext  # pylint: disable=unused-argument
+    self,
+    headers: HttpHeaders,  # pylint: disable=unused-argument
+    context: ServicerContext,  # pylint: disable=unused-argument
   ) -> None | HeadersResponse:
     """Process incoming response headers.
 
@@ -275,9 +291,9 @@ class CalloutServer:
     return None
 
   def on_request_body(
-      self,
-      body: HttpBody,  # pylint: disable=unused-argument
-      context: ServicerContext  # pylint: disable=unused-argument
+    self,
+    body: HttpBody,  # pylint: disable=unused-argument
+    context: ServicerContext,  # pylint: disable=unused-argument
   ) -> None | BodyResponse | ImmediateResponse:
     """Process an incoming request body.
 
@@ -291,9 +307,9 @@ class CalloutServer:
     return None
 
   def on_response_body(
-      self,
-      body: HttpBody,  # pylint: disable=unused-argument
-      context: ServicerContext  # pylint: disable=unused-argument
+    self,
+    body: HttpBody,  # pylint: disable=unused-argument
+    context: ServicerContext,  # pylint: disable=unused-argument
   ) -> None | BodyResponse:
     """Process an incoming response body.
 
@@ -313,14 +329,19 @@ class _GRPCCalloutService(ExternalProcessorServicer):
   def __init__(self, processor, *args, **kwargs):
     self._processor = processor
     self._server = grpc.server(
-        futures.ThreadPoolExecutor(max_workers=processor.server_thread_count))
+      futures.ThreadPoolExecutor(max_workers=processor.server_thread_count)
+    )
     add_ExternalProcessorServicer_to_server(self, self._server)
     server_credentials = grpc.ssl_server_credentials(
-        private_key_certificate_chain_pairs=[(processor.cert_key,
-                                              processor.cert)])
+      private_key_certificate_chain_pairs=[
+        (processor.cert_key, processor.cert)
+      ]
+    )
     address_str = addr_to_str(processor.address)
     self._server.add_secure_port(address_str, server_credentials)
-    self._start_msg = f'GRPC callout server started, listening on {address_str}.'
+    self._start_msg = (
+      'GRPC callout server started, listening on ' + f'{address_str}.'
+    )
     if processor.insecure_address:
       insecure_str = addr_to_str(processor.insecure_address)
       self._server.add_insecure_port(insecure_str)
@@ -339,9 +360,9 @@ class _GRPCCalloutService(ExternalProcessorServicer):
     logging.info(self._start_msg)
 
   def Process(
-      self,
-      callout_iterator: Iterable[ProcessingRequest],
-      context: ServicerContext,
+    self,
+    callout_iterator: Iterable[ProcessingRequest],
+    context: ServicerContext,
   ) -> Iterator[ProcessingResponse]:
     """Process the client callout."""
     for callout in callout_iterator:

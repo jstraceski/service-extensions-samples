@@ -21,18 +21,19 @@ from extproc.service import callout_tools
 class CalloutServerExample(callout_server.CalloutServer):
   """Example callout server.
 
-  On a request header callout we perform a redirect to 
+  On a request header callout we perform a redirect to
   '{http://service-extensions.com/redirect}' with the status of
   '{301}' - MovedPermanently returning an ImmediateResponse.
   """
 
   def on_request_headers(
-      self, headers: service_pb2.HttpHeaders,
-      context: ServicerContext) -> service_pb2.ImmediateResponse:
+    self, headers: service_pb2.HttpHeaders, context: ServicerContext
+  ) -> service_pb2.ImmediateResponse:
     """Custom processor on request headers."""
     return callout_tools.header_immediate_response(
-        code=301,
-        headers=[('Location', 'http://service-extensions.com/redirect')])
+      code=301,
+      headers=[('Location', 'http://service-extensions.com/redirect')],
+    )
 
 
 if __name__ == '__main__':

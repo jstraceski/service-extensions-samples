@@ -37,7 +37,8 @@ class CalloutServerExample(callout_server.CalloutServer):
   """
 
   def add_device_type_header(
-      self, headers: service_pb2.HttpHeaders) -> service_pb2.HeadersResponse:
+    self, headers: service_pb2.HttpHeaders
+  ) -> service_pb2.HeadersResponse:
     """Generate a client-device-type header response.
 
     Args:
@@ -46,22 +47,28 @@ class CalloutServerExample(callout_server.CalloutServer):
       The constructed HeadersResponse object.
     """
 
-    host_value = next((header.raw_value.decode('utf-8')
-                       for header in headers.headers.headers
-                       if header.key == ':host'), None)
+    host_value = next(
+      (
+        header.raw_value.decode('utf-8')
+        for header in headers.headers.headers
+        if header.key == ':host'
+      ),
+      None,
+    )
 
     header_mutation = service_pb2.HeadersResponse()
 
     if host_value:
       device_type = get_device_type(host_value)
       header_mutation = callout_tools.add_header_mutation(
-          add=[('client-device-type', device_type)], clear_route_cache=True)
+        add=[('client-device-type', device_type)], clear_route_cache=True
+      )
 
     return header_mutation
 
   def on_request_headers(
-      self, headers: service_pb2.HttpHeaders,
-      _: ServicerContext) -> service_pb2.HeadersResponse:
+    self, headers: service_pb2.HttpHeaders, _: ServicerContext
+  ) -> service_pb2.HeadersResponse:
     """Custom processor on request headers."""
     return self.add_device_type_header(headers=headers)
 

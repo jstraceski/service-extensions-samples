@@ -15,7 +15,9 @@ from __future__ import print_function
 
 from envoy.config.core.v3.base_pb2 import HeaderValueOption
 from envoy.service.ext_proc.v3 import external_processor_pb2 as service_pb2
-from envoy.service.ext_proc.v3 import external_processor_pb2_grpc as service_pb2_grpc
+from envoy.service.ext_proc.v3 import (
+  external_processor_pb2_grpc as service_pb2_grpc,
+)
 import pytest
 
 from extproc.example.update_header.service_callout_example import (
@@ -32,7 +34,7 @@ from extproc.tests.basic_grpc_test import (
 
 # Import the setup server test fixture.
 _ = setup_server
-_local_test_args = {"kwargs": insecure_kwargs, "test_class": CalloutServerTest}
+_local_test_args = {'kwargs': insecure_kwargs, 'test_class': CalloutServerTest}
 
 
 @pytest.mark.parametrize('server', [_local_test_args], indirect=True)
@@ -44,20 +46,23 @@ def test_append_action(server: CalloutServerTest) -> None:
 
     headers = service_pb2.HttpHeaders(end_of_stream=False)
     end_headers = service_pb2.HttpHeaders(end_of_stream=True)
+    expected_action = (
+      HeaderValueOption.HeaderAppendAction.OVERWRITE_IF_EXISTS_OR_ADD
+    )
 
     value = make_request(stub, response_headers=headers)
     assert value.HasField('response_headers')
     assert value.response_headers == callout_tools.add_header_mutation(
-        add=[('header-response', 'response-new-value')],
-        append_action=HeaderValueOption.HeaderAppendAction.
-        OVERWRITE_IF_EXISTS_OR_ADD)
+      add=[('header-response', 'response-new-value')],
+      append_action=expected_action,
+    )
 
     value = make_request(stub, request_headers=headers)
     assert value.HasField('request_headers')
     assert value.request_headers == callout_tools.add_header_mutation(
-        add=[('header-request', 'request-new-value')],
-        append_action=HeaderValueOption.HeaderAppendAction.
-        OVERWRITE_IF_EXISTS_OR_ADD,
-        clear_route_cache=True)
+      add=[('header-request', 'request-new-value')],
+      append_action=expected_action,
+      clear_route_cache=True,
+    )
 
     make_request(stub, request_headers=end_headers)

@@ -28,21 +28,19 @@ class CalloutServerExample(callout_server.CalloutServer):
   """
 
   def on_request_headers(
-      self, headers: service_pb2.HttpHeaders, context: ServicerContext
+    self, headers: service_pb2.HttpHeaders, context: ServicerContext
   ) -> service_pb2.HeadersResponse:
     """Custom processor on request headers."""
     return callout_tools.add_header_mutation(
-      add=[('header-request', 'request')],
-      clear_route_cache=True
+      add=[('header-request', 'request')], clear_route_cache=True
     )
 
   def on_response_headers(
-      self, headers: service_pb2.HttpHeaders, context: ServicerContext
+    self, headers: service_pb2.HttpHeaders, context: ServicerContext
   ) -> service_pb2.HeadersResponse:
     """Custom processor on response headers."""
     return callout_tools.add_header_mutation(
-      add=[('header-response', 'response')],
-      remove=['foo']
+      add=[('header-response', 'response')], remove=['foo']
     )
 
 

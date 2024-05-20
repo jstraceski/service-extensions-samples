@@ -32,35 +32,36 @@ class BasicCalloutServer(CalloutServer):
 
   def on_request_headers(self, headers: HttpHeaders, _) -> HeadersResponse:
     """Custom processor on request headers.
-    
+
     This example contains a few of the possible modifications that can be
     applied to a request header callout:
-    
+
     * A change to the ':host' and ':path' headers.
     * Adding the header 'header-request' with the value of 'request'.
     * Removal of a header 'foo'.
     * Clearing of the route cache.
-    
+
     """
-    logging.debug("Received request headers callout: %s", headers)
+    logging.debug('Received request headers callout: %s', headers)
     return add_header_mutation(
-        add=[
-            # Change the host to 'service-extensions.com'.
-            (':host', 'service-extensions.com'),
-            # Change the destination path to '/'.
-            (':path', '/'),
-            ('header-request', 'request')
-        ],
-        remove=['foo'],
-        clear_route_cache=True)
+      add=[
+        # Change the host to 'service-extensions.com'.
+        (':host', 'service-extensions.com'),
+        # Change the destination path to '/'.
+        (':path', '/'),
+        ('header-request', 'request'),
+      ],
+      remove=['foo'],
+      clear_route_cache=True,
+    )
 
   def on_response_headers(self, headers: HttpHeaders, _) -> HeadersResponse:
     """Custom processor on response headers.
-    
+
     Generates an addition to the response headers containing:
     'hello: service-extensions'.
     """
-    logging.debug("Received response headers callout: %s", headers)
+    logging.debug('Received response headers callout: %s', headers)
     return add_header_mutation(add=[('hello', 'service-extensions')])
 
   def on_request_body(self, body: HttpBody, _) -> BodyResponse:
@@ -69,24 +70,26 @@ class BasicCalloutServer(CalloutServer):
     Generates a request body modification replacing the request body with
     'replaced-body'.
     """
-    logging.debug("Received request body callout: %s", body)
+    logging.debug('Received request body callout: %s', body)
     return add_body_mutation(body='replaced-body')
 
   def on_response_body(self, body: HttpBody, _) -> BodyResponse:
     """Custom processor on the response body.
-    
+
     Generates a response body modification clearing the response body.
     """
-    logging.debug("Received response body callout: %s", body)
+    logging.debug('Received response body callout: %s', body)
     return add_body_mutation(clear_body=True)
 
 
 if __name__ == '__main__':
   # Useful command line args.
   parser = argparse.ArgumentParser()
-  parser.add_argument('--secure_health_check',
-                      action="store_true",
-                      help="Run a HTTPS health check rather than an HTTP one.")
+  parser.add_argument(
+    '--secure_health_check',
+    action='store_true',
+    help='Run a HTTPS health check rather than an HTTP one.',
+  )
   args = parser.parse_args()
   # Set the debug level.
   logging.basicConfig(level=logging.DEBUG)

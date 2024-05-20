@@ -17,23 +17,26 @@ from envoy.config.core.v3.base_pb2 import HeaderMap
 from envoy.config.core.v3.base_pb2 import HeaderValue
 from envoy.type.v3.http_status_pb2 import StatusCode
 from envoy.service.ext_proc.v3 import external_processor_pb2 as service_pb2
-from envoy.service.ext_proc.v3 import external_processor_pb2_grpc as service_pb2_grpc
+from envoy.service.ext_proc.v3 import (
+  external_processor_pb2_grpc as service_pb2_grpc,
+)
 import pytest
 import typing
 
 from extproc.example.redirect.service_callout_example import (
-    CalloutServerExample as CalloutServerTest,)
+  CalloutServerExample as CalloutServerTest,
+)
 from extproc.service.callout_tools import header_immediate_response
 from extproc.tests.basic_grpc_test import (
-    setup_server,
-    get_insecure_channel,
-    insecure_kwargs,
-    make_request,
+  setup_server,
+  get_insecure_channel,
+  insecure_kwargs,
+  make_request,
 )
 
 # Import the setup server test fixture.
 _ = setup_server
-_local_test_args = {"kwargs": insecure_kwargs, "test_class": CalloutServerTest}
+_local_test_args = {'kwargs': insecure_kwargs, 'test_class': CalloutServerTest}
 
 
 @pytest.mark.parametrize('server', [_local_test_args], indirect=True)
@@ -43,7 +46,7 @@ def test_header_immediate_response(server: CalloutServerTest) -> None:
 
     # Construct the HeaderMap
     header_map = HeaderMap()
-    header_value = HeaderValue(key="header", raw_value=b"value")
+    header_value = HeaderValue(key='header', raw_value=b'value')
     header_map.headers.extend([header_value])
 
     # Construct HttpHeaders with the HeaderMap
@@ -53,5 +56,6 @@ def test_header_immediate_response(server: CalloutServerTest) -> None:
 
     assert response.HasField('immediate_response')
     assert response.immediate_response == header_immediate_response(
-        code=typing.cast(StatusCode, 301),
-        headers=[('Location', 'http://service-extensions.com/redirect')])
+      code=typing.cast(StatusCode, 301),
+      headers=[('Location', 'http://service-extensions.com/redirect')],
+    )
